@@ -1,0 +1,112 @@
+program 2 wallpaper
+mainactivity:
+
+package com.example.wallpaper;
+
+import android.app.WallpaperManager;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+import android.widget.Button;
+
+import androidx.appcompat.app.AppCompatActivity;
+import com.example.wallpaper.R;
+
+import java.io.IOException;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class MainActivity extends AppCompatActivity {
+
+    // Array of drawable resources for wallpapers
+    private int[] wallpaperImages = {
+            R.drawable.images,
+            R.drawable.ab,
+            R.drawable.ac,
+            R.drawable.ad
+    };
+
+    private WallpaperManager wallpaperManager;
+    private Random random;
+    private Timer timer;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Button changeWallpaperButton = findViewById(R.id.changeWallpaperButton);
+
+        wallpaperManager = WallpaperManager.getInstance(this);
+        random = new Random();
+
+        changeWallpaperButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startChangingWallpaper();
+            }
+        });
+    }
+
+    // Method to start changing wallpaper every 30 seconds
+    private void startChangingWallpaper() {
+        if (timer != null) {
+            timer.cancel(); // Stop any existing timer
+        }
+
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(() -> setRandomWallpaper());
+            }
+        },0, 30000); // 0 delay, 30 seconds interval
+    }
+
+    // Method to set a random wallpaper
+    private void setRandomWallpaper() {
+        int randomIndex = random.nextInt(wallpaperImages.length);
+        try {
+            wallpaperManager.setBitmap(
+                    BitmapFactory.decodeResource(getResources(), wallpaperImages[randomIndex]
+                    )
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+xml file:
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center"
+    android:background="@android:color/white">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CHANGING WALLPAPER APPLICATION"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <Button
+        android:id="@+id/changeWallpaperButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CLICK HERE TO CHANGE WALLPAPER" />
+
+</LinearLayout>
+
+--->android mainfext.xml
+inside activity
+
+ android:name="com.example.wallpaper.MainActivity"
