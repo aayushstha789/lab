@@ -1,85 +1,70 @@
 program 2 wallpaper
-mainactivity:
-
-package com.example.wallpaper;
+package com.my_application.wallpaper_changing_app;
 
 import android.app.WallpaperManager;
-import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.View;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.wallpaper.R;
+import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
-
-    // Array of drawable resources for wallpapers
-    private int[] wallpaperImages = {
-            R.drawable.images,
-            R.drawable.ab,
-            R.drawable.ac,
-            R.drawable.ad
-    };
-
     private WallpaperManager wallpaperManager;
-    private Random random;
     private Timer timer;
+    private Drawable draw;
+    private Button changeWallpaperButton;
+    private int id = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button changeWallpaperButton = findViewById(R.id.changeWallpaperButton);
-
+        timer = new Timer();
         wallpaperManager = WallpaperManager.getInstance(this);
-        random = new Random();
+        changeWallpaperButton = findViewById(R.id.changeWallpaperButton);
 
-        changeWallpaperButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startChangingWallpaper();
-            }
-        });
+        changeWallpaperButton.setOnClickListener(v -> setWallpaper());
     }
 
-    // Method to start changing wallpaper every 30 seconds
-    private void startChangingWallpaper() {
-        if (timer != null) {
-            timer.cancel(); // Stop any existing timer
-        }
-
-        timer = new Timer();
+    private void setWallpaper() {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                runOnUiThread(() -> setRandomWallpaper());
+                switch (id) {
+                    case 1:
+                        draw = ContextCompat.getDrawable(MainActivity.this, R.drawable.vijay_pp);
+                        id = 2;
+                        break;
+                    case 2:
+                        draw = ContextCompat.getDrawable(MainActivity.this, R.drawable.wakanda);
+                        id = 3;
+                        break;
+                    case 3:
+                        draw = ContextCompat.getDrawable(MainActivity.this, R.drawable.wall1);
+                        id = 1;
+                        break;
+                }
+                if (draw != null) {
+                    Bitmap wallpaper = ((BitmapDrawable) draw).getBitmap();
+                    try {
+                        wallpaperManager.setBitmap(wallpaper);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        },0, 30000); // 0 delay, 30 seconds interval
-    }
-
-    // Method to set a random wallpaper
-    private void setRandomWallpaper() {
-        int randomIndex = random.nextInt(wallpaperImages.length);
-        try {
-            wallpaperManager.setBitmap(
-                    BitmapFactory.decodeResource(getResources(), wallpaperImages[randomIndex]
-                    )
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        }, 0, 30000);
     }
 }
 
-xml file:
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -105,8 +90,3 @@ xml file:
         android:text="CLICK HERE TO CHANGE WALLPAPER" />
 
 </LinearLayout>
-
---->android mainfext.xml
-inside activity
-
- android:name="com.example.wallpaper.MainActivity"
