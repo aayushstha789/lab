@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="Medicine Reminder"
+        android:textSize="24sp"
+        android:gravity="center"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/switch_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Switch to Fetch"
+            android:textSize="16sp" />
+
+        <Switch
+            android:id="@+id/mode_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- Insert Layout -->
+    <LinearLayout
+        android:id="@+id/insert_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/medicinename"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter Medicine Name"
+            android:inputType="text"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter Date (DD/MM/YYYY)"
+            android:inputType="date"
+            android:layout_marginBottom="16dp" />
+
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/insert"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Insert" />
+    </LinearLayout>
+
+    <!-- Fetch Layout -->
+    <LinearLayout
+        android:id="@+id/fetch_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/fetch_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter Date (DD/MM/YYYY)"
+            android:inputType="date"
+            android:layout_marginBottom="16dp" />
+
+        <Spinner
+            android:id="@+id/fetch_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/fetch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fetch" />
+    </LinearLayout>
+
+</LinearLayout>
+
+
+
+
+
+package com.example.medicinereminder;
+
+import android.database.Cursor;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ArrayAdapter;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    EditText medname, meddate, fetchDate;
+    Button insert, fetch;
+    Spinner daySpinner, fetchSpinner;
+    Switch modeSwitch;
+    TextView switchLabel;
+    View insertLayout, fetchLayout;
+
+    DatabaseConnection dbconnection;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Initialize UI components
+        medname = findViewById(R.id.medicinename);
+        meddate = findViewById(R.id.date);
+        fetchDate = findViewById(R.id.fetch_date);
+        insert = findViewById(R.id.insert);
+        fetch = findViewById(R.id.fetch);
+        daySpinner = findViewById(R.id.spinner);
+        fetchSpinner = findViewById(R.id.fetch_spinner);
+        modeSwitch = findViewById(R.id.mode_switch);
+        switchLabel = findViewById(R.id.switch_label);
+        insertLayout = findViewById(R.id.insert_layout);
+        fetchLayout = findViewById(R.id.fetch_layout);
+
+        // Initialize the database connection
+        dbconnection = new DatabaseConnection(this);
+
+        // Set spinner values
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this, R.array.timeoftheday, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        daySpinner.setAdapter(adapter);
+        fetchSpinner.setAdapter(adapter);
+
+        // Switch behavior between Insert and Fetch
+        modeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                switchLabel.setText("Switch to Insert");
+                insertLayout.setVisibility(View.GONE);
+                fetchLayout.setVisibility(View.VISIBLE);
+            } else {
+                switchLabel.setText("Switch to Fetch");
+                fetchLayout.setVisibility(View.GONE);
+                insertLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // Insert Button functionality
+        insert.setOnClickListener(v -> {
+            String name = medname.getText().toString().trim();
+            String date = meddate.getText().toString().trim();
+            String time = daySpinner.getSelectedItem().toString();
+
+            if (!name.isEmpty() && !date.isEmpty()) {
+                boolean isInserted = dbconnection.insertvalues(name, date, time);
+                Toast.makeText(getApplicationContext(), isInserted ? "Data Inserted" : "Insert Failed", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "Fill all fields", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Fetch Button functionality
+        fetch.setOnClickListener(v -> {
+            String date = fetchDate.getText().toString().trim();
+            String time = fetchSpinner.getSelectedItem().toString();
+
+            Cursor c = dbconnection.FetchData(date, time);
+
+            if (c != null && c.moveToFirst()) {
+                StringBuilder meds = new StringBuilder();
+                do {
+                    meds.append(c.getString(c.getColumnIndexOrThrow("MedicineName"))).append("\n");
+                } while (c.moveToNext());
+                c.close();
+                Toast.makeText(getApplicationContext(), meds.toString(), Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "No data found", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+}
+
+
+
+package com.example.medicinereminder;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DatabaseConnection extends SQLiteOpenHelper {
+
+    public DatabaseConnection(Context context) {
+        super(context, "Medicinedb", null, 1);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE MDTable (MedicineName TEXT, date TEXT, time TEXT)");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS MDTable");
+        onCreate(db);
+    }
+
+    public boolean insertvalues(String medname, String meddate, String medtime) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("MedicineName", medname);
+        values.put("date", meddate);
+        values.put("time", medtime);
+
+        long result = db.insert("MDTable", null, values);
+        return result != -1;
+    }
+
+    public Cursor FetchData(String date, String time) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.query(
+                "MDTable",
+                new String[]{"MedicineName"},
+                "date=? AND time=?",
+                new String[]{date, time},
+                null, null, null
+        );
+    }
+}
+
+
+
+
+
+<resources>
+    <string name="app_name">Medicine Reminder</string>
+    <string-array name="timeoftheday">
+        <item>Morning</item>
+        <item>Afternoon</item>
+        <item>Evening</item>
+        <item>Night</item>
+    </string-array>
+</resources>
+
